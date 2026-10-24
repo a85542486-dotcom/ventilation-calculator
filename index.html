@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#101c2d">
+<title>산업환기 필요환기량 계산기</title>
+<style>
+:root{font-family:system-ui,-apple-system,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;color:#102238;background:#f3f6fa;font-synthesis:none}*{box-sizing:border-box}body{margin:0}header{background:#101d2e;color:white;padding:38px 20px}header>div,main,footer{max-width:850px;margin:auto}header small{font-weight:700;letter-spacing:.15em;color:#8cc5ea}h1{margin:10px 0;font-size:clamp(26px,5vw,36px)}header p{color:#c7d5e3;margin:0;line-height:1.65}main{padding:22px 16px 32px}.panel{background:white;border:1px solid #dce4ee;border-radius:16px;padding:24px;margin-bottom:15px;box-shadow:0 6px 18px #182e4b0b}h2{font-size:19px;margin:0 0 19px}h2 span{color:#32749e;margin-right:8px}label{display:block;font-weight:700;font-size:14px;margin-bottom:7px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}input,select{width:100%;padding:13px 12px;font:inherit;color:inherit;border:1px solid #b9c7d6;border-radius:9px;background:white}select:disabled{background:#f1f4f7;color:#67798c}input:focus,select:focus{outline:2px solid #5b9cc4;outline-offset:1px}.hint{font-size:13px;color:#566b7b;line-height:1.6;margin:8px 0 0}.fields{margin-top:18px}.field{min-width:0}.field small{display:block;color:#64758a;margin-top:5px}#result{background:#10263b;color:white;border-radius:13px;padding:24px}#result .num{font-size:clamp(35px,8vw,52px);font-weight:850;letter-spacing:-1.5px;overflow-wrap:anywhere}#result .num span{font-size:18px;font-weight:500;letter-spacing:0}#result p{color:#c9d9e6;line-height:1.6}#detail{background:#eaf1f8;padding:14px 18px;border-radius:9px;line-height:1.75;overflow-wrap:anywhere;white-space:pre-line}button{border:0;border-radius:9px;padding:13px 19px;background:#2879a4;color:white;font-weight:750;cursor:pointer}button:hover{background:#155f86}.notice{font-size:13px;line-height:1.7;color:#50647a}footer{padding:0 16px 28px;color:#56677a;font-size:12px}@media(max-width:550px){.grid{grid-template-columns:1fr}.panel{padding:19px}header{padding:30px 17px}}
+</style>
+</head>
+<body>
+<header><div><small>LOCAL EXHAUST VENTILATION</small><h1>산업환기 계산기</h1><p>국소배기장치 필요환기량 계산 · <strong>길이 단위를 선택하여 입력</strong> · 결과 m³/min</p></div></header>
+<main>
+<section class="panel"><h2><span>01</span> 후드 선택</h2><div class="grid"><div><label for="hood">후드 형식</label><select id="hood"><option value="booth">부스식</option><option value="external">외부식 일반형</option><option value="flanged">외부식 플랜지 일반형</option><option value="slot">외부식 슬롯형</option><option value="flangedslot">외부식 플랜지 슬롯형</option><option value="canopy">캐노피형</option></select></div><div><label for="shape">후드 개구부 형태</label><select id="shape"><option value="rect">사각형</option><option value="round">원형</option></select><p id="shapeHint" class="hint"></p></div></div><p id="formulaLabel" class="hint" aria-live="polite"></p></section>
+<section class="panel"><h2><span>02</span> 수치 입력</h2><div class="grid"><div><label for="speed">제어속도 Vc (m/s)</label><input id="speed" type="number" min="0" step="any" inputmode="decimal" value="5"></div><div><label for="unit">길이 입력 단위</label><select id="unit"><option value="cm">cm (센티미터)</option><option value="m" selected>m (미터)</option><option value="mm">mm (밀리미터)</option></select><p class="hint">기본 단위는 m(미터)입니다. 입력한 치수는 자동으로 m로 환산합니다.</p></div></div><div id="fields" class="grid fields"></div></section>
+<section class="panel"><h2><span>03</span> 필요환기량 Q</h2><div id="result" aria-live="polite"><div id="answer" class="num">— <span>m³/min</span></div><p id="message">입력값을 확인하세요.</p></div><h2 style="margin-top:24px">계산 과정</h2><div id="detail">—</div><p style="margin-top:20px"><button id="reset" type="button">입력 초기화</button></p></section>
+<p class="notice">※ 입력한 길이는 m로 환산한 뒤 계산하며 결과는 m³/min으로 표시합니다. 외부식 일반형: Q = 60 × Vc × (10X² + A), 외부식 플랜지 일반형: Q = 60 × 0.75 × Vc × (10X² + A), 부스식: Q = 60 × Vc × A, 외부식 슬롯형: Q = 60 × 3.7 × Vc × L × X, 외부식 플랜지 슬롯형: Q = 60 × 2.6 × Vc × L × X, 캐노피형: Q = 60 × 1.4 × Vc × P × D. 실제 설계에서는 후드별 포집 조건과 적용 기준을 별도로 검토하세요.</p>
+</main><footer>단위가 잘못 표시되면 필요한 환기량이 크게 달라집니다. 실제 설계 전 단위를 다시 확인하세요.</footer>
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const conversion={mm:.001,cm:.01,m:1};
+const fmt=x=>Number.isFinite(x)?x.toLocaleString('ko-KR',{minimumFractionDigits:2,maximumFractionDigits:2}):'—';
+const precise=x=>Number.isFinite(x)?Number(x.toPrecision(10)).toLocaleString('ko-KR',{maximumFractionDigits:10}):'—';
+const special=new Set(['slot','flangedslot','canopy']);
+let cache={};
+function field(id,label,val){return `<div class="field"><label for="${id}">${label}</label><input id="${id}" type="number" min="0" step="any" inputmode="decimal" value="${val}"><small>선택한 길이 단위로 입력</small></div>`}
+function setShape(){const fixed=special.has($('hood').value);if(fixed)$('shape').value='rect';$('shape').disabled=fixed;$('shape').querySelector('option[value="round"]').hidden=fixed;$('shapeHint').textContent=fixed?'이 후드는 사각형만 선택할 수 있습니다.':'';}
+function rebuild(){for(const e of $('fields').querySelectorAll('input'))cache[e.id]=e.value;setShape();const h=$('hood').value,round=$('shape').value==='round';let html='';if(h==='slot'||h==='flangedslot'){html=field('slotLength','슬롯 길이 L',cache.slotLength??'')+field('distance','오염원 거리 X',cache.distance??'');}else if(h==='canopy'){html=field('perimeter','오염원 둘레 P',cache.perimeter??'')+field('verticalDistance','캐노피–오염원 수직거리 D',cache.verticalDistance??'');}else{html=round?field('diameter','개구면 지름 D',cache.diameter??'7'):field('width','개구면 가로길이',cache.width??'7')+field('height','개구면 세로길이(높이)',cache.height??'5');if(h==='external'||h==='flanged')html+=field('distance','후드에서 발생원까지 거리 X',cache.distance??'0');}$('fields').innerHTML=html;for(const e of $('fields').querySelectorAll('input'))e.addEventListener('input',()=>{cache[e.id]=e.value;calculate()});calculate();}
+function numeric(id,allowZero=false){const e=$(id);if(!e||e.value.trim()==='')return NaN;const v=Number(e.value);return Number.isFinite(v)&&(allowZero?v>=0:v>0)?v:NaN;}
+function calculate(){const h=$('hood').value,u=$('unit').value,f=conversion[u],vc=numeric('speed');let q=NaN,formula='',detail='',desc='';
+if(h==='slot'||h==='flangedslot'){
+ const L=numeric('slotLength')*f,X=numeric('distance',true)*f,k=h==='slot'?3.7:2.6;
+ formula=`Q = ${k} × Vc × L × X × 60`;
+ q=k*vc*L*X*60;
+ detail=`L = ${precise(L)} m, X = ${precise(X)} m\nQ = ${k} × ${precise(vc)} × ${precise(L)} × ${precise(X)} × 60\n= ${fmt(q)} m³/min`;
+ desc=`슬롯 길이: ${precise(L)} m · 오염원 거리: ${precise(X)} m`;
+}else if(h==='canopy'){
+ const P=numeric('perimeter')*f,D=numeric('verticalDistance',true)*f;
+ formula='Q = 1.4 × Vc × P × D × 60';
+ q=1.4*vc*P*D*60;
+ detail=`P = ${precise(P)} m, D = ${precise(D)} m\nQ = 1.4 × ${precise(vc)} × ${precise(P)} × ${precise(D)} × 60\n= ${fmt(q)} m³/min`;
+ desc=`오염원 둘레: ${precise(P)} m · 수직거리: ${precise(D)} m`;
+}else{
+ const round=$('shape').value==='round';let A,areaExpression;
+ if(round){const d=numeric('diameter')*f;A=Math.PI*d*d/4;areaExpression=`A = π × (${precise(d)} m)² / 4 = ${precise(A)} m²`;}
+ else{const w=numeric('width')*f,t=numeric('height')*f;A=w*t;areaExpression=`A = ${precise(w)} m × ${precise(t)} m = ${precise(A)} m²`;}
+ if(h==='external'||h==='flanged'){
+  const X=numeric('distance',true)*f,k=h==='flanged'?.75:1;
+  formula=h==='flanged'?'Q = 0.75 × Vc × (10X² + A) × 60':'Q = Vc × (10X² + A) × 60';
+  q=60*vc*(10*X*X+A)*k;
+  detail=`${areaExpression}\nX = ${precise(X)} m\nQ = ${precise(k)} × ${precise(vc)} × (10 × ${precise(X)}² + ${precise(A)}) × 60\n= ${fmt(q)} m³/min`;
+ }else{formula='Q = Vc × A × 60';q=60*vc*A;detail=`${areaExpression}\nQ = ${precise(vc)} × ${precise(A)} × 60\n= ${fmt(q)} m³/min`;}
+ desc=`개구면 면적: ${precise(A)} m²`;
+}
+$('formulaLabel').textContent='적용 공식 · '+formula;
+if(!Number.isFinite(q)||q<=0){$('answer').innerHTML='— <span>m³/min</span>';$('message').textContent='제어속도와 치수는 0보다 커야 합니다. (이격거리 X, D는 0도 입력 가능하지만 결과는 0입니다.)';$('detail').textContent='—';return;}
+$('answer').innerHTML=`${fmt(q)} <span>m³/min</span>`;
+$('message').textContent=`제어속도: ${precise(vc)} m/s · ${desc} · 입력 단위: ${u}`;
+$('detail').textContent=detail;
+}
+$('hood').addEventListener('change',rebuild);$('shape').addEventListener('change',rebuild);$('unit').addEventListener('change',calculate);$('speed').addEventListener('input',calculate);$('reset').addEventListener('click',()=>{cache={};$('hood').value='booth';$('shape').value='rect';$('unit').value='m';$('speed').value='5';rebuild()});rebuild();
+</script>
+</body></html>
